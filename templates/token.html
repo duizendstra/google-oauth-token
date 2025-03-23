@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Information</title>
+    <!-- Materialize CSS (Community Fork) v2.2.1-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@materializecss/materialize@2.2.1/dist/css/materialize.min.css">
+    <!-- Google Fonts (Roboto) -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        main {
+            flex: 1 0 auto;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 1rem;
+            overflow-x: auto;
+        }
+        .copy-button {
+            position: relative; /* For tooltip positioning */
+            cursor: pointer;
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            transition: background-color 0.3s ease;
+            display: inline-flex; /* Use inline-flex for better alignment */
+            align-items: center; /* Center items vertically */
+            justify-content: center; /* Center items horizontally */
+        }
+       .copy-button-container{
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+       }
+
+        .copy-button:hover {
+            background-color: #d3d3d3;
+        }
+
+        /* Tooltip styles - CORRECTED */
+        .copy-button .tooltiptext {
+            visibility: hidden;
+            width: 120px;
+            background-color: black;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 0;
+            position: absolute;
+            z-index: 1;
+            bottom: 150%;  /* Adjusted position */
+            left: 50%;
+            transform: translateX(-50%); /* Center horizontally */
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0s linear 0.3s; /* Delayed visibility change */
+        }
+
+        .copy-button:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+            transition: opacity 0.3s, visibility 0s; /* Immediate visibility change */
+        }
+        /* Prevent Materialize from hijacking tooltips */
+         .material-tooltip {
+            display: none !important;
+        }
+
+        .card .card-content {
+           padding: 10px;
+        }
+
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-wrapper blue">
+            <a href="/" class="brand-logo center">Token Data</a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="col s12">
+                    <div class="card">
+                        <div class="card-content">
+                            <div class="copy-button-container">
+                                <span class="card-title">Token Data</span>
+                                <button class="copy-button" onclick="copyToClipboard()">
+                                    <i class="material-icons">content_copy</i>
+                                    <span class="tooltiptext">Copy to clipboard</span>
+                                </button>
+                            </div>
+                            <pre id="token-data">{{ token_data | tojson(indent=4) }}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="page-footer blue">
+        <div class="container">
+            <!-- Footer content can be added here if needed -->
+        </div>
+    </footer>
+
+    <!-- Materialize JavaScript (Community Fork) v2.2.1 -->
+    <script src="https://cdn.jsdelivr.net/npm/@materializecss/materialize@2.2.1/dist/js/materialize.min.js"></script>
+
+    <script>
+        async function copyToClipboard() {
+            const tokenDataElement = document.getElementById('token-data');
+            const textToCopy = tokenDataElement.textContent;
+
+            try {
+                await navigator.clipboard.writeText(textToCopy);
+                const tooltip = document.querySelector('.copy-button .tooltiptext');
+                tooltip.innerHTML = "Copied!";
+                setTimeout(() => {
+                    tooltip.innerHTML = "Copy to clipboard";
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                alert('Failed to copy text to clipboard. Please try again.');
+            }
+        }
+    </script>
+</body>
+</html>

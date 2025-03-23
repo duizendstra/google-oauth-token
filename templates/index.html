@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google OAuth Token Fetcher</title>
+    <!-- Materialize CSS (Community Fork) v2.2.1-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@materializecss/materialize@2.2.1/dist/css/materialize.min.css">
+    <!-- Google Fonts (Roboto) -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        main {
+            flex: 1 0 auto;
+        }
+        .container {
+            margin-top: 2rem;
+            width: 90%;
+            max-width: 1200px;
+            margin-bottom: 2rem;
+        }
+        .scope-group {
+            margin-bottom: 1rem;
+            padding-left: 1rem; /* Add indentation for scope groups */
+        }
+        .scope-group h5 {
+            margin-bottom: 0.5rem;
+            font-size: 1.2rem; /* Slightly larger heading */
+            font-weight: 500; /* Make heading bolder */
+        }
+        .card .card-content {
+            padding: 20px; /* Consistent padding */
+        }
+        .material-tooltip {
+            display: none !important;
+        }
+        /* Style for scope labels to improve readability */
+        .scope-group p label span {
+          margin-left: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-wrapper blue">
+            <a href="/" class="brand-logo center">Google OAuth Token Fetcher</a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="col s12">
+                    <div class="card">
+                        <div class="card-content">
+                            <span class="card-title">Select Scopes</span>
+                            <p>Client ID and Secret are loaded from environment variables.</p>
+                            <form method="POST" action="/">
+                                <div class="scope-group">
+                                    <h5>Basic Profile</h5>
+                                    <p>
+                                        <label>
+                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/userinfo.profile" checked />
+                                            <span>userinfo.profile</span>
+                                        </label>
+                                    </p>
+                                     <p>
+                                        <label>
+                                            <input type="checkbox" name="scopes" value="openid" checked />
+                                            <span>openid</span>
+                                        </label>
+                                    </p>
+                                    <p>
+                                        <label>
+                                            <input type="checkbox" name="scopes" value="profile" checked />
+                                            <span>profile</span>
+                                        </label>
+                                    </p>
+                                    <p>
+                                        <label>
+                                            <input type="checkbox" name="scopes" value="email" checked />
+                                            <span>email</span>
+                                        </label>
+                                    </p>
+                                </div>
+
+                                <div class="scope-group">
+                                     <h5>Google Drive</h5>
+                                        <p>
+                                            <label>
+                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/drive.readonly" />
+                                                <span>drive.readonly</span>
+                                            </label>
+                                        </p>
+                                       <p>
+                                            <label>
+                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/drive.file" />
+                                                <span>drive.file</span>
+                                            </label>
+                                        </p>
+                                         <p>
+                                            <label>
+                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/drive" />
+                                                <span>drive (Full Access)</span>
+                                            </label>
+                                        </p>
+                                </div>
+
+                                  <div class="scope-group">
+                                     <h5>Gmail</h5>
+                                       <p>
+                                            <label>
+                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/gmail.readonly" />
+                                                <span>gmail.readonly</span>
+                                            </label>
+                                        </p>
+                                        <p>
+                                            <label>
+                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/gmail.modify" />
+                                                <span>gmail.modify</span>
+                                            </label>
+                                        </p>
+                                        <p>
+                                            <label>
+                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/gmail.compose" />
+                                                <span>gmail.compose</span>
+                                            </label>
+                                        </p>
+                                          <p>
+                                            <label>
+                                                <input type="checkbox" name="scopes" value="https://mail.google.com/" />
+                                                <span>Full Access</span>
+                                            </label>
+                                        </p>
+
+                                </div>
+
+                                <div class="scope-group">
+                                    <h5>Google Calendar</h5>
+                                    <p>
+                                        <label>
+                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/calendar.readonly" />
+                                            <span>calendar.readonly</span>
+                                        </label>
+                                    </p>
+                                    <p>
+                                      <label>
+                                          <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/calendar.events.readonly" />
+                                          <span>calendar.events.readonly</span>
+                                      </label>
+                                   </p>
+                                    <p>
+                                      <label>
+                                          <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/calendar" />
+                                          <span>Full Access</span>
+                                      </label>
+                                   </p>
+                                </div>
+
+                                <div class="scope-group">
+                                    <h5>Google Sheets</h5>
+                                        <p>
+                                            <label>
+                                               <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/spreadsheets.readonly" />
+                                                <span>spreadsheets.readonly</span>
+                                            </label>
+                                        </p>
+                                         <p>
+                                            <label>
+                                               <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/spreadsheets" />
+                                                <span>spreadsheets (Full Access)</span>
+                                            </label>
+                                        </p>
+                                </div>
+                                <div class="scope-group">
+                                        <h5>Google Docs</h5>
+                                          <p>
+                                            <label>
+                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/documents.readonly" />
+                                                <span>documents.readonly</span>
+                                            </label>
+                                        </p>
+                                          <p>
+                                            <label>
+                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/documents" />
+                                                <span>documents (Full Access)</span>
+                                            </label>
+                                        </p>
+                                </div>
+                                 <div class="scope-group">
+                                     <h5>Google Contacts</h5>
+                                    <p>
+                                        <label>
+                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/contacts.readonly" />
+                                            <span>contacts.readonly</span>
+                                        </label>
+                                     </p>
+                                      <p>
+                                        <label>
+                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/contacts" />
+                                            <span>contacts (Full Access)</span>
+                                        </label>
+                                    </p>
+                                  </div>
+                                <div class="scope-group">
+                                    <h5>Cloud Identity - User Invitations</h5>
+                                     <p>
+                                        <label>
+                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.userinvitations.readonly" />
+                                            <span>cloud-identity.userinvitations.readonly</span>
+                                        </label>
+                                    </p>
+                                    <p>
+                                        <label>
+                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.userinvitations" />
+                                            <span>cloud-identity.userinvitations (Read/Write)</span>
+                                        </label>
+                                    </p>
+                                </div>
+                                    <div class="scope-group">
+                                    <h5>Cloud Identity - Groups</h5>
+                                     <p>
+                                        <label>
+                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.groups.readonly" />
+                                            <span>cloud-identity.groups.readonly</span>
+                                        </label>
+                                    </p>
+                                    <p>
+                                        <label>
+                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.groups" />
+                                            <span>cloud-identity.groups (Read/Write)</span>
+                                        </label>
+                                    </p>
+                                </div>
+                                 <div class="scope-group">
+                                     <h5>Cloud Identity - Devices</h5>
+                                    <p>
+                                       <label>
+                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.devices.readonly" />
+                                            <span>cloud-identity.devices.readonly</span>
+                                        </label>
+                                    </p>
+                                     <p>
+                                       <label>
+                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.devices" />
+                                            <span>cloud-identity.devices (Read/Write)</span>
+                                        </label>
+                                    </p>
+                                </div>
+                                    <div class="scope-group">
+                                        <h5>Cloud Identity - Org Units</h5>
+                                       <p>
+                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.orgunits.readonly" />
+                                             <span>cloud-identity.orgunits.readonly</span>
+                                        </label>
+                                      </p>
+                                       <p>
+                                           <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.orgunits" />
+                                           <span>cloud-identity.orgunits (Read/Write)</span>
+                                        </label>
+                                    </div>
+                                <div class="card-action">
+                                    <button class="btn waves-effect waves-light blue" type="submit" name="action">Authorize
+                                        <i class="material-icons right">send</i>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="page-footer blue">
+        <div class="container">
+            <!-- Footer content can be added here if needed -->
+        </div>
+    </footer>
+
+    <!-- Materialize JavaScript (Community Fork) v2.2.1 -->
+    <script src="https://cdn.jsdelivr.net/npm/@materializecss/materialize@2.2.1/dist/js/materialize.min.js"></script>
+</body>
+</html>
