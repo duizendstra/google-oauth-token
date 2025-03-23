@@ -23,23 +23,14 @@
             max-width: 1200px;
             margin-bottom: 2rem;
         }
-        .scope-group {
-            margin-bottom: 1rem;
-            padding-left: 1rem; /* Add indentation for scope groups */
-        }
-        .scope-group h5 {
-            margin-bottom: 0.5rem;
-            font-size: 1.2rem; /* Slightly larger heading */
-            font-weight: 500; /* Make heading bolder */
-        }
         .card .card-content {
-            padding: 20px; /* Consistent padding */
+            padding: 20px;
         }
         .material-tooltip {
             display: none !important;
         }
-        /* Style for scope labels to improve readability */
-        .scope-group p label span {
+       /* Style for scope labels to improve readability */
+        .collapsible-body p label span {
           margin-left: 0.5rem;
         }
     </style>
@@ -60,191 +51,434 @@
                             <span class="card-title">Select Scopes</span>
                             <p>Client ID and Secret are loaded from environment variables.</p>
                             <form method="POST" action="/">
-                                <div class="scope-group">
-                                    <h5>Basic Profile</h5>
-                                    <p>
-                                        <label>
-                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/userinfo.profile" checked />
-                                            <span>userinfo.profile</span>
-                                        </label>
-                                    </p>
-                                </div>
-
-                                <div class="scope-group">
-                                     <h5>Google Drive</h5>
-                                        <p>
-                                            <label>
-                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/drive.readonly" />
-                                                <span>drive.readonly</span>
-                                            </label>
-                                        </p>
-                                       <p>
-                                            <label>
-                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/drive.file" />
-                                                <span>drive.file</span>
-                                            </label>
-                                        </p>
-                                         <p>
-                                            <label>
-                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/drive" />
-                                                <span>drive (Full Access)</span>
-                                            </label>
-                                        </p>
-                                </div>
-
-                                  <div class="scope-group">
-                                     <h5>Gmail</h5>
-                                       <p>
-                                            <label>
-                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/gmail.readonly" />
-                                                <span>gmail.readonly</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/gmail.modify" />
-                                                <span>gmail.modify</span>
-                                            </label>
-                                        </p>
-                                        <p>
-                                            <label>
-                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/gmail.compose" />
-                                                <span>gmail.compose</span>
-                                            </label>
-                                        </p>
+                                <ul class="collapsible" data-collapsible="accordion">
+                                    <li>
+                                        <div class="collapsible-header"><i class="material-icons">account_circle</i>Basic Profile</div>
+                                        <div class="collapsible-body">
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/userinfo.profile" checked />
+                                                    <span>userinfo.profile</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="collapsible-header"><i class="material-icons">drive_folder_upload</i>Google Drive</div>
+                                        <div class="collapsible-body">
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/drive.readonly" />
+                                                    <span>drive.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/drive.file" />
+                                                    <span>drive.file</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/drive" />
+                                                    <span>drive (Full Access)</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="collapsible-header"><i class="material-icons">mail_outline</i>Gmail</div>
+                                        <div class="collapsible-body">
+                                            <p>
+                                               <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/gmail.readonly" />
+                                                    <span>gmail.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/gmail.modify" />
+                                                    <span>gmail.modify</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/gmail.compose" />
+                                                    <span>gmail.compose</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://mail.google.com/" />
+                                                    <span>Full Access</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                     <li>
+                                        <div class="collapsible-header"><i class="material-icons">event</i>Google Calendar</div>
+                                        <div class="collapsible-body">
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/calendar.readonly" />
+                                                    <span>calendar.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                              <label>
+                                                  <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/calendar.events.readonly" />
+                                                  <span>calendar.events.readonly</span>
+                                              </label>
+                                           </p>
+                                            <p>
+                                              <label>
+                                                  <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/calendar" />
+                                                  <span>Full Access</span>
+                                              </label>
+                                           </p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="collapsible-header"><i class="material-icons">grid_on</i>Google Sheets</div>
+                                        <div class="collapsible-body">
                                           <p>
-                                            <label>
-                                                <input type="checkbox" name="scopes" value="https://mail.google.com/" />
-                                                <span>Full Access</span>
-                                            </label>
-                                        </p>
+                                                <label>
+                                                   <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/spreadsheets.readonly" />
+                                                    <span>spreadsheets.readonly</span>
+                                                </label>
+                                            </p>
+                                             <p>
+                                                <label>
+                                                   <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/spreadsheets" />
+                                                    <span>spreadsheets (Full Access)</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="collapsible-header"><i class="material-icons">description</i>Google Docs</div>
+                                        <div class="collapsible-body">
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/documents.readonly" />
+                                                    <span>documents.readonly</span>
+                                                </label>
+                                            </p>
+                                              <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/documents" />
+                                                    <span>documents (Full Access)</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="collapsible-header"><i class="material-icons">contacts</i>Google Contacts</div>
+                                        <div class="collapsible-body">
+                                             <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/contacts.readonly" />
+                                                    <span>contacts.readonly</span>
+                                                </label>
+                                            </p>
+                                              <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/contacts" />
+                                                    <span>contacts (Full Access)</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
 
-                                </div>
+                                     <li>
+                                        <div class="collapsible-header"><i class="material-icons">group</i>Cloud Identity - Groups</div>
+                                        <div class="collapsible-body">
+                                           <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.groups.readonly" />
+                                                    <span>cloud-identity.groups.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.groups" />
+                                                    <span>cloud-identity.groups (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                     <li>
+                                        <div class="collapsible-header"><i class="material-icons">devices_other</i>Cloud Identity - Devices</div>
+                                        <div class="collapsible-body">
+                                           <p>
+                                               <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.devices.readonly" />
+                                                    <span>cloud-identity.devices.readonly</span>
+                                                </label>
+                                            </p>
+                                             <p>
+                                               <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.devices" />
+                                                    <span>cloud-identity.devices (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="collapsible-header"><i class="material-icons">domain</i>Cloud Identity - Org Units</div>
+                                        <div class="collapsible-body">
+                                             <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.orgunits.readonly" />
+                                                     <span>cloud-identity.orgunits.readonly</span>
+                                                </label>
+                                              </p>
+                                               <p>
+                                                   <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.orgunits" />
+                                                   <span>cloud-identity.orgunits (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
 
-                                <div class="scope-group">
-                                    <h5>Google Calendar</h5>
-                                    <p>
-                                        <label>
-                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/calendar.readonly" />
-                                            <span>calendar.readonly</span>
-                                        </label>
-                                    </p>
-                                    <p>
-                                      <label>
-                                          <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/calendar.events.readonly" />
-                                          <span>calendar.events.readonly</span>
-                                      </label>
-                                   </p>
-                                    <p>
-                                      <label>
-                                          <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/calendar" />
-                                          <span>Full Access</span>
-                                      </label>
-                                   </p>
-                                </div>
-
-                                <div class="scope-group">
-                                    <h5>Google Sheets</h5>
-                                        <p>
-                                            <label>
-                                               <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/spreadsheets.readonly" />
-                                                <span>spreadsheets.readonly</span>
-                                            </label>
-                                        </p>
-                                         <p>
-                                            <label>
-                                               <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/spreadsheets" />
-                                                <span>spreadsheets (Full Access)</span>
-                                            </label>
-                                        </p>
-                                </div>
-                                <div class="scope-group">
-                                        <h5>Google Docs</h5>
+                                    <li>
+                                        <div class="collapsible-header"><i class="material-icons">supervised_user_circle</i>Admin SDK - Users</div>
+                                        <div class="collapsible-body">
                                           <p>
-                                            <label>
-                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/documents.readonly" />
-                                                <span>documents.readonly</span>
-                                            </label>
-                                        </p>
-                                          <p>
-                                            <label>
-                                                <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/documents" />
-                                                <span>documents (Full Access)</span>
-                                            </label>
-                                        </p>
-                                </div>
-                                 <div class="scope-group">
-                                     <h5>Google Contacts</h5>
-                                    <p>
-                                        <label>
-                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/contacts.readonly" />
-                                            <span>contacts.readonly</span>
-                                        </label>
-                                     </p>
-                                      <p>
-                                        <label>
-                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/contacts" />
-                                            <span>contacts (Full Access)</span>
-                                        </label>
-                                    </p>
-                                  </div>
-                                <div class="scope-group">
-                                    <h5>Cloud Identity - User Invitations</h5>
-                                     <p>
-                                        <label>
-                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.userinvitations.readonly" />
-                                            <span>cloud-identity.userinvitations.readonly</span>
-                                        </label>
-                                    </p>
-                                    <p>
-                                        <label>
-                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.userinvitations" />
-                                            <span>cloud-identity.userinvitations (Read/Write)</span>
-                                        </label>
-                                    </p>
-                                </div>
-                                    <div class="scope-group">
-                                    <h5>Cloud Identity - Groups</h5>
-                                     <p>
-                                        <label>
-                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.groups.readonly" />
-                                            <span>cloud-identity.groups.readonly</span>
-                                        </label>
-                                    </p>
-                                    <p>
-                                        <label>
-                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.groups" />
-                                            <span>cloud-identity.groups (Read/Write)</span>
-                                        </label>
-                                    </p>
-                                </div>
-                                 <div class="scope-group">
-                                     <h5>Cloud Identity - Devices</h5>
-                                    <p>
-                                       <label>
-                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.devices.readonly" />
-                                            <span>cloud-identity.devices.readonly</span>
-                                        </label>
-                                    </p>
-                                     <p>
-                                       <label>
-                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.devices" />
-                                            <span>cloud-identity.devices (Read/Write)</span>
-                                        </label>
-                                    </p>
-                                </div>
-                                    <div class="scope-group">
-                                        <h5>Cloud Identity - Org Units</h5>
-                                       <p>
-                                            <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.orgunits.readonly" />
-                                             <span>cloud-identity.orgunits.readonly</span>
-                                        </label>
-                                      </p>
-                                       <p>
-                                           <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/cloud-identity.orgunits" />
-                                           <span>cloud-identity.orgunits (Read/Write)</span>
-                                        </label>
-                                    </div>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.user.readonly" />
+                                                    <span>admin.directory.user.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.user" />
+                                                    <span>admin.directory.user (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.user.alias.readonly" />
+                                                    <span>admin.directory.user.alias.readonly</span>
+                                                </label>
+                                            </p>
+                                             <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.user.alias" />
+                                                    <span>admin.directory.user.alias (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                             <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.user.security" />
+                                                    <span>admin.directory.user.security</span>
+                                                </label>
+                                            </p>
+                                             <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.user.schema" />
+                                                    <span>admin.directory.user.schema</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                     <li>
+                                        <div class="collapsible-header"><i class="material-icons">group</i>Admin SDK - Groups</div>
+                                        <div class="collapsible-body">
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.group.readonly" />
+                                                    <span>admin.directory.group.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.group" />
+                                                    <span>admin.directory.group (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                              <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.group.member.readonly" />
+                                                    <span>admin.directory.group.member.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.group.member" />
+                                                    <span>admin.directory.group.member (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                             <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/apps.groups.settings" />
+                                                    <span>apps.groups.settings</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="collapsible-header"><i class="material-icons">domain</i>Admin SDK - Organizational Units</div>
+                                        <div class="collapsible-body">
+                                           <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.orgunit.readonly" />
+                                                    <span>admin.directory.orgunit.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.orgunit" />
+                                                    <span>admin.directory.orgunit (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                     <li>
+                                        <div class="collapsible-header"><i class="material-icons">devices_other</i>Admin SDK - Devices (Chrome OS)</div>
+                                        <div class="collapsible-body">
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.device.chromeos.readonly" />
+                                                    <span>admin.directory.device.chromeos.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.device.chromeos" />
+                                                    <span>admin.directory.device.chromeos (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                      <li>
+                                        <div class="collapsible-header"><i class="material-icons">phone_iphone</i>Admin SDK - Devices (Mobile)</div>
+                                        <div class="collapsible-body">
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.device.mobile.readonly" />
+                                                    <span>admin.directory.device.mobile.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.device.mobile" />
+                                                    <span>admin.directory.device.mobile (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                             <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.device.mobile.action" />
+                                                    <span>admin.directory.device.mobile.action</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="collapsible-header"><i class="material-icons">business</i>Admin SDK - Domains</div>
+                                        <div class="collapsible-body">
+                                           <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.domain.readonly" />
+                                                    <span>admin.directory.domain.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.domain" />
+                                                    <span>admin.directory.domain (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                     <li>
+                                        <div class="collapsible-header"><i class="material-icons">verified_user</i>Admin SDK - Roles</div>
+                                        <div class="collapsible-body">
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.rolemanagement.readonly" />
+                                                    <span>admin.directory.rolemanagement.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.rolemanagement" />
+                                                    <span>admin.directory.rolemanagement (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                     <li>
+                                        <div class="collapsible-header"><i class="material-icons">event_available</i>Admin SDK - Calendar Resources</div>
+                                        <div class="collapsible-body">
+                                           <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.resource.calendar.readonly" />
+                                                    <span>admin.directory.resource.calendar.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.resource.calendar" />
+                                                    <span>admin.directory.resource.calendar (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                      <li>
+                                        <div class="collapsible-header"><i class="material-icons">perm_identity</i>Admin SDK - Customer</div>
+                                        <div class="collapsible-body">
+                                             <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.customer.readonly" />
+                                                    <span>admin.directory.customer.readonly</span>
+                                                </label>
+                                            </p>
+                                            <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.customer" />
+                                                    <span>admin.directory.customer (Read/Write)</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                       <li>
+                                        <div class="collapsible-header"><i class="material-icons">notifications</i>Admin SDK - Notifications</div>
+                                        <div class="collapsible-body">
+                                           <p>
+                                                <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.directory.notifications" />
+                                                    <span>admin.directory.notifications</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+                                    <li>
+                                        <div class="collapsible-header"><i class="material-icons">description</i>Admin SDK - Reports API (Audit)</div>
+                                        <div class="collapsible-body">
+                                            <p>
+                                                 <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.reports.audit.readonly"  />
+                                                    <span>admin.reports.audit.readonly</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+
+                                    <li>
+                                        <div class="collapsible-header"><i class="material-icons">data_usage</i>Admin SDK - Reports API (Usage)</div>
+                                        <div class="collapsible-body">
+                                             <p>
+                                                 <label>
+                                                    <input type="checkbox" name="scopes" value="https://www.googleapis.com/auth/admin.reports.usage.readonly"  />
+                                                    <span>admin.reports.usage.readonly</span>
+                                                </label>
+                                            </p>
+                                        </div>
+                                    </li>
+
+                                </ul>
+
                                 <div class="card-action">
                                     <button class="btn waves-effect waves-light blue" type="submit" name="action">Authorize
                                         <i class="material-icons right">send</i>
@@ -266,5 +500,11 @@
 
     <!-- Materialize JavaScript (Community Fork) v2.2.1 -->
     <script src="https://cdn.jsdelivr.net/npm/@materializecss/materialize@2.2.1/dist/js/materialize.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var elems = document.querySelectorAll('.collapsible');
+        var instances = M.Collapsible.init(elems);
+      });
+    </script>
 </body>
 </html>
