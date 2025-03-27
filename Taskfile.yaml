@@ -1,32 +1,38 @@
+# ./Taskfile.yaml
 version: '3'
-dotenv: [".env"] # Optional: Loads variables from a .env file if it exists
+dotenv: [".env"] # Loads variables from .env file
 
 vars:
   # Define the output file name for the AI context
   AI_OUTPUT_FILE: ai_context.txt
+  # Read variables from .env into Taskfile vars for easier use (optional but cleaner)
+  # Note: These are snapshots at load time. Shell commands use live env vars.
+  REGISTRY_PATH: '{{.REGISTRY_PATH | default .Env.REGISTRY_PATH}}'
+  IMAGE_NAME: '{{.IMAGE_NAME | default .Env.IMAGE_NAME}}'
+  IMAGE_TAG: '{{.IMAGE_TAG | default .Env.IMAGE_TAG | default "latest"}}'
+  # Construct full image name for convenience in some tasks if needed
+  FULL_IMAGE_NAME: "{{.REGISTRY_PATH}}/{{.IMAGE_NAME}}" # Tag is separate
 
 tasks:
+  # --- Existing AI Task ---
   ai:
     summary: "Generate a context file for AI interaction."
     desc: |
       Generates a file (default: ai_context.txt specified in vars) containing:
       1. An interactively entered prompt.
-      2. The content of specific project files (.go, .mod, .md, Taskfile.yaml).
+      2. The content of specific project files (.py, .html, .md, .gitignore, Taskfile.yaml).
       Each file's content is clearly delimited for unambiguous parsing by an AI.
     cmds:
-      # Use a single multi-line shell command for better flow control
       - |
         set -e # Exit immediately if a command exits with a non-zero status.
 
         OUTPUT_FILE="{{.AI_OUTPUT_FILE}}"
 
         # --- Clear/Create Output File ---
-        # Ensures we start with a fresh file
         > "$OUTPUT_FILE"
         echo "Generating AI context in $OUTPUT_FILE..."
 
         # --- Prompt Input (Interactive) ---
-        # Using 'read' for portability. Ensure prompt is not empty.
         USER_PROMPT=""
         while [ -z "$USER_PROMPT" ]; do
           read -r -p "Enter a prompt for the AI: " USER_PROMPT
@@ -43,29 +49,106 @@ tasks:
         printf "### Code Content\n\n" >> "$OUTPUT_FILE"
 
         # --- Find and Append Relevant Files ---
-        # Using find with -exec to process each file.
-        # Handles file names with spaces or special characters correctly.
-        # Includes error checking within the sh -c script.
-        find . -type f \( -name "*.py" -o -name "*.html" -o -name "*.md" -o -name ".gitignore" \) \
+        # Updated find command based on previous context
+        find . -type f \( -name "*.py" -o -name "*.html" -o -name "*.md" -o -name ".gitignore" -o -name "Taskfile.yaml" -o -name "Dockerfile" -o -name "requirements.txt" \) \
+          -not -path "./.venv/*" -not -path "./env/*" -not -path "./venv/*" \
           -exec sh -c '
-            # Pass Taskfile variables safely into the subshell
             FILE="$1"
             OUTPUT_FILE_INNER="'"$OUTPUT_FILE"'"
-
-            # Print start delimiter, file content, and end delimiter
-            # Added error checks for each step writing to the output file
             {
               printf "\n======== FILE: %s ========\n\n" "$FILE" && \
               cat "$FILE" && \
               printf "\n======== END FILE: %s ========\n\n" "$FILE"
             } >> "$OUTPUT_FILE_INNER" || {
               echo "Error processing file: $FILE" >&2
-              # We rely on set -e in the parent shell to stop execution
               exit 1
             }
           ' sh {} \;
 
         echo "Successfully generated AI context in $OUTPUT_FILE"
-
-    # Ensures the interactive prompt and any errors are visible.
     silent: false
+
+  # --- Container Tasks ---
+  build:
+    summary: Build the container image using Docker.
+    desc: |
+      Builds the Docker image using the Dockerfile in the current directory.
+      Uses REGISTRY_PATH, IMAGE_NAME, IMAGE_TAG from .env file.
+      Example: task build
+               task build IMAGE_TAG=v1.0.1 # Override tag
+    vars:
+      # Allow overriding tag via CLI, default to value from .env (via global vars)
+      TAG: '{{.IMAGE_TAG | default "latest"}}'
+    cmds:
+      # Check required environment variables loaded via dotenv
+      - test -n "$REGISTRY_PATH" || (echo "Error: REGISTRY_PATH not set in .env" && exit 1)
+      - test -n "$IMAGE_NAME" || (echo "Error: IMAGE_NAME not set in .env" && exit 1)
+      - |
+        set -e
+        IMG="${REGISTRY_PATH}/${IMAGE_NAME}:{{.TAG}}"
+        echo "Building image: $IMG ..."
+        docker build -t "$IMG" .
+        echo "Build complete: $IMG"
+    silent: false
+
+  tag:
+    summary: Apply an additional tag to the locally built image.
+    desc: |
+      Tags the image identified by REGISTRY_PATH/IMAGE_NAME:SOURCE_TAG with a NEW_TAG.
+      Example: task tag NEW_TAG=v1.0.0                # Tags image with tag 'latest' (from .env) as v1.0.0
+               task tag SOURCE_TAG=v1.0.0 NEW_TAG=stable # Tags image v1.0.0 as stable
+    vars:
+      # Tag of the image to use as the source
+      SOURCE_TAG: '{{.IMAGE_TAG | default "latest"}}'
+      # The new tag to apply
+      NEW_TAG: ""
+    cmds:
+      # Check required environment variables
+      - test -n "$REGISTRY_PATH" || (echo "Error: REGISTRY_PATH not set in .env" && exit 1)
+      - test -n "$IMAGE_NAME" || (echo "Error: IMAGE_NAME not set in .env" && exit 1)
+      # Check the CLI var NEW_TAG is provided
+      - test -n "{{.NEW_TAG}}" || (echo "Error: Usage 'task tag NEW_TAG=<new-tag> [SOURCE_TAG=<source>]'" && exit 1)
+      - |
+        set -e
+        SOURCE_IMG="${REGISTRY_PATH}/${IMAGE_NAME}:{{.SOURCE_TAG}}"
+        TARGET_IMG="${REGISTRY_PATH}/${IMAGE_NAME}:{{.NEW_TAG}}"
+        echo "Tagging $SOURCE_IMG as $TARGET_IMG ..."
+        docker tag "$SOURCE_IMG" "$TARGET_IMG"
+        echo "Tagging complete."
+    silent: false
+
+  push:
+    summary: Push the container image to the registry.
+    desc: |
+      Pushes the specified tag to the registry (defaults to IMAGE_TAG from .env).
+      Assumes docker is already authenticated with the registry (e.g., using 'gcloud auth configure-docker').
+      Example: task push            # Pushes the tag specified in .env (e.g., latest)
+               task push PUSH_TAG=v1.0.0 # Pushes the v1.0.0 tag
+    vars:
+      # Tag to push, defaults to IMAGE_TAG from .env (via global vars)
+      PUSH_TAG: '{{.IMAGE_TAG | default "latest"}}'
+    cmds:
+      # Check required environment variables
+      - test -n "$REGISTRY_PATH" || (echo "Error: REGISTRY_PATH not set in .env" && exit 1)
+      - test -n "$IMAGE_NAME" || (echo "Error: IMAGE_NAME not set in .env" && exit 1)
+      - |
+        set -e
+        IMG_TO_PUSH="${REGISTRY_PATH}/${IMAGE_NAME}:{{.PUSH_TAG}}"
+        echo "Pushing $IMG_TO_PUSH ..."
+        echo "(Ensure you have authenticated docker with '$REGISTRY_PATH')"
+        echo "(e.g., run 'gcloud auth configure-docker $(echo $REGISTRY_PATH | cut -d'/' -f1)' or 'docker login ...')"
+        docker push "$IMG_TO_PUSH"
+        echo "Push complete: $IMG_TO_PUSH"
+    silent: false
+
+  # --- Convenience Task ---
+  build-push:
+    summary: Build and Push the container image.
+    desc: Builds the image and then pushes it using the specified tag (defaults to IMAGE_TAG from .env).
+    vars:
+      TAG: '{{.IMAGE_TAG | default "latest"}}'
+    cmds:
+      - task: build
+        vars: {TAG: "{{.TAG}}"}
+      - task: push
+        vars: {PUSH_TAG: "{{.TAG}}"}
