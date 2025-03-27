@@ -16,6 +16,7 @@ vars:
 tasks:
   # --- Existing AI Task ---
   ai:
+    # ... (ai task content remains the same) ...
     summary: "Generate a context file for AI interaction."
     desc: |
       Generates a file (default: ai_context.txt specified in vars) containing:
@@ -75,14 +76,17 @@ tasks:
       Builds the Docker image using the Dockerfile in the current directory.
       Uses REGISTRY_PATH, IMAGE_NAME, IMAGE_TAG from .env file.
       Example: task build
-               task build IMAGE_TAG=v1.0.1 # Override tag
+               task build TAG=v1.0.1 # Override tag
     vars:
-      # Allow overriding tag via CLI, default to value from .env (via global vars)
       TAG: '{{.IMAGE_TAG | default "latest"}}'
+    # --- NEW: Use preconditions for checks ---
+    preconditions:
+      - sh: '[ -n "$REGISTRY_PATH" ]' # Check if REGISTRY_PATH is non-empty
+        msg: "Error: REGISTRY_PATH is not set in .env file."
+      - sh: '[ -n "$IMAGE_NAME" ]' # Check if IMAGE_NAME is non-empty
+        msg: "Error: IMAGE_NAME is not set in .env file."
+    # --- REMOVED old test commands from cmds ---
     cmds:
-      # Check required environment variables loaded via dotenv
-      - test -n "$REGISTRY_PATH" || (echo "Error: REGISTRY_PATH not set in .env" && exit 1)
-      - test -n "$IMAGE_NAME" || (echo "Error: IMAGE_NAME not set in .env" && exit 1)
       - |
         set -e
         IMG="${REGISTRY_PATH}/${IMAGE_NAME}:{{.TAG}}"
@@ -98,16 +102,18 @@ tasks:
       Example: task tag NEW_TAG=v1.0.0                # Tags image with tag 'latest' (from .env) as v1.0.0
                task tag SOURCE_TAG=v1.0.0 NEW_TAG=stable # Tags image v1.0.0 as stable
     vars:
-      # Tag of the image to use as the source
       SOURCE_TAG: '{{.IMAGE_TAG | default "latest"}}'
-      # The new tag to apply
       NEW_TAG: ""
+    # --- NEW: Use preconditions for checks ---
+    preconditions:
+      - sh: '[ -n "$REGISTRY_PATH" ]'
+        msg: "Error: REGISTRY_PATH is not set in .env file."
+      - sh: '[ -n "$IMAGE_NAME" ]'
+        msg: "Error: IMAGE_NAME is not set in .env file."
+      - sh: '[ -n "{{.NEW_TAG}}" ]' # Check Task variable directly
+        msg: "Error: NEW_TAG variable must be provided. Usage 'task tag NEW_TAG=<new-tag> [SOURCE_TAG=<source>]'"
+    # --- REMOVED old test commands from cmds ---
     cmds:
-      # Check required environment variables
-      - test -n "$REGISTRY_PATH" || (echo "Error: REGISTRY_PATH not set in .env" && exit 1)
-      - test -n "$IMAGE_NAME" || (echo "Error: IMAGE_NAME not set in .env" && exit 1)
-      # Check the CLI var NEW_TAG is provided
-      - test -n "{{.NEW_TAG}}" || (echo "Error: Usage 'task tag NEW_TAG=<new-tag> [SOURCE_TAG=<source>]'" && exit 1)
       - |
         set -e
         SOURCE_IMG="${REGISTRY_PATH}/${IMAGE_NAME}:{{.SOURCE_TAG}}"
@@ -125,12 +131,15 @@ tasks:
       Example: task push            # Pushes the tag specified in .env (e.g., latest)
                task push PUSH_TAG=v1.0.0 # Pushes the v1.0.0 tag
     vars:
-      # Tag to push, defaults to IMAGE_TAG from .env (via global vars)
       PUSH_TAG: '{{.IMAGE_TAG | default "latest"}}'
+    # --- NEW: Use preconditions for checks ---
+    preconditions:
+      - sh: '[ -n "$REGISTRY_PATH" ]'
+        msg: "Error: REGISTRY_PATH is not set in .env file."
+      - sh: '[ -n "$IMAGE_NAME" ]'
+        msg: "Error: IMAGE_NAME is not set in .env file."
+    # --- REMOVED old test commands from cmds ---
     cmds:
-      # Check required environment variables
-      - test -n "$REGISTRY_PATH" || (echo "Error: REGISTRY_PATH not set in .env" && exit 1)
-      - test -n "$IMAGE_NAME" || (echo "Error: IMAGE_NAME not set in .env" && exit 1)
       - |
         set -e
         IMG_TO_PUSH="${REGISTRY_PATH}/${IMAGE_NAME}:{{.PUSH_TAG}}"
@@ -147,8 +156,9 @@ tasks:
     desc: Builds the image and then pushes it using the specified tag (defaults to IMAGE_TAG from .env).
     vars:
       TAG: '{{.IMAGE_TAG | default "latest"}}'
+    # No preconditions needed here as they are checked by the called tasks
     cmds:
       - task: build
-        vars: {TAG: "{{.TAG}}"}
+        vars: { TAG: "{{.TAG}}" }
       - task: push
-        vars: {PUSH_TAG: "{{.TAG}}"}
+        vars: { PUSH_TAG: "{{.TAG}}" }

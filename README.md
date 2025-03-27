@@ -1,6 +1,7 @@
 # Google OAuth 2.0 Token Fetcher (Simplified)
 
 This app gets a Google OAuth 2.0 token and shows it.  It runs on Google Cloud Run.
+Open the project in Project IDX: https://idx.google.com/import?url=https://github.com/duizendstra/google-oauth-token
 
 ## Setup
 
