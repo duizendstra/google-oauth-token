@@ -30,6 +30,12 @@ This app gets a Google OAuth 2.0 token and shows it.  It runs on Google Cloud Ru
         *   Cloud Run URL: `https://my-app.run.app/callback`
         *   Encoded: `https%3A%2F%2Fmy-app.run.app%2Fcallback`
 
+5. **Enable APIs & Define Scopes:**
+    *   Go to the Google Cloud Console -> APIs & Services -> Library.
+    *   Search for and **enable** the APIs you need scopes for (e.g., "Google Workspace License Manager API").
+    *   **Verify** that the scope is available as a checkbox option on the application's main page (`index.html`). If not, it needs to be added to the `templates/index.html` file. For the Google License Manager, the scope is:
+        *   `https://www.googleapis.com/auth/apps.licensing`
+
 ## Deploy
 
 1.  Go to your project directory: `cd {YOUR_PROJECT_DIRECTORY}`

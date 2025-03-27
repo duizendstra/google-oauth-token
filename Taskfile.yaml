@@ -1,0 +1,71 @@
+version: '3'
+dotenv: [".env"] # Optional: Loads variables from a .env file if it exists
+
+vars:
+  # Define the output file name for the AI context
+  AI_OUTPUT_FILE: ai_context.txt
+
+tasks:
+  ai:
+    summary: "Generate a context file for AI interaction."
+    desc: |
+      Generates a file (default: ai_context.txt specified in vars) containing:
+      1. An interactively entered prompt.
+      2. The content of specific project files (.go, .mod, .md, Taskfile.yaml).
+      Each file's content is clearly delimited for unambiguous parsing by an AI.
+    cmds:
+      # Use a single multi-line shell command for better flow control
+      - |
+        set -e # Exit immediately if a command exits with a non-zero status.
+
+        OUTPUT_FILE="{{.AI_OUTPUT_FILE}}"
+
+        # --- Clear/Create Output File ---
+        # Ensures we start with a fresh file
+        > "$OUTPUT_FILE"
+        echo "Generating AI context in $OUTPUT_FILE..."
+
+        # --- Prompt Input (Interactive) ---
+        # Using 'read' for portability. Ensure prompt is not empty.
+        USER_PROMPT=""
+        while [ -z "$USER_PROMPT" ]; do
+          read -r -p "Enter a prompt for the AI: " USER_PROMPT
+          if [ -z "$USER_PROMPT" ]; then
+            echo "Prompt cannot be empty. Please try again." >&2
+          fi
+        done
+
+        # --- Write Prompt to Output File ---
+        printf "### Prompt\n\n" >> "$OUTPUT_FILE"
+        printf "%s\n\n" "$USER_PROMPT" >> "$OUTPUT_FILE" # Add extra newline for separation
+
+        # --- Write Code Content Header ---
+        printf "### Code Content\n\n" >> "$OUTPUT_FILE"
+
+        # --- Find and Append Relevant Files ---
+        # Using find with -exec to process each file.
+        # Handles file names with spaces or special characters correctly.
+        # Includes error checking within the sh -c script.
+        find . -type f \( -name "*.py" -o -name "*.html" -o -name "*.md" -o -name ".gitignore" \) \
+          -exec sh -c '
+            # Pass Taskfile variables safely into the subshell
+            FILE="$1"
+            OUTPUT_FILE_INNER="'"$OUTPUT_FILE"'"
+
+            # Print start delimiter, file content, and end delimiter
+            # Added error checks for each step writing to the output file
+            {
+              printf "\n======== FILE: %s ========\n\n" "$FILE" && \
+              cat "$FILE" && \
+              printf "\n======== END FILE: %s ========\n\n" "$FILE"
+            } >> "$OUTPUT_FILE_INNER" || {
+              echo "Error processing file: $FILE" >&2
+              # We rely on set -e in the parent shell to stop execution
+              exit 1
+            }
+          ' sh {} \;
+
+        echo "Successfully generated AI context in $OUTPUT_FILE"
+
+    # Ensures the interactive prompt and any errors are visible.
+    silent: false

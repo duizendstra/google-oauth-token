@@ -174,3 +174,7 @@ env.yaml
 old/
 .env.yaml
 notes.txt
+ai_context.txt
+ai.patch
+README.md.orig
+templates/index.html.orig
