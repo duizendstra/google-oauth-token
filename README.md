@@ -9,7 +9,7 @@ This repository is configured for use with [Project IDX](https://idx.google.com)
 **Click the button below to open this project directly in Project IDX (Replace URL if applicable):**
 
 <!-- TODO: Replace with your actual GitHub repo URL if you want the button to work -->
-<a href="https://idx.google.com/import?url=YOUR_GITHUB_REPO_URL_HERE">
+<a href="https://idx.google.com/import?url=https://github.com/duizendstra/google-oauth-token">
   <picture>
     <source
       media="(prefers-color-scheme: dark)"
