@@ -23,6 +23,7 @@
     pkgs.python3Packages.flake8 # Python linter 
     pkgs.git # Version control system (essential for git operations)
     pkgs.go-task # Taskfile runner (to execute tasks defined in Taskfile.yaml)
+    pkgs.python311Packages.pip
 
     # Python Tooling (for linting, formatting - used by Taskfile)
     pkgs.black # The uncompromising Python code formatter

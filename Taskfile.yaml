@@ -11,11 +11,12 @@ vars:
   # but kept broad for potential future use or other file types.
   INCLUDE_EXTENSIONS_REGEX: '\.(py|yaml|json|md|gitignore|txt|nix|Dockerfile)$|^(Taskfile\.yaml|requirements\.txt)$'
   MAX_FILE_SIZE_KB: 500
-  EXCLUDE_PATHS_REGEX: '(^\.git/|^\.venv/|^__pycache__/|^\.DS_Store|^\.vscode/|ai_context\.txt)' # Removed TF specific exclusions
+  EXCLUDE_PATHS_REGEX: '(^\.git/|^\.venv/|^__pycache__/|^\.DS_Store|^\.vscode/|ai_context\.txt)'
 
   # --- Container Variables (reading from .env) ---
   REGISTRY_PATH: '{{.REGISTRY_PATH | default .Env.REGISTRY_PATH}}'
   IMAGE_NAME: '{{.IMAGE_NAME | default .Env.IMAGE_NAME}}'
+  # Default IMAGE_TAG comes from .env, falling back to "latest"
   IMAGE_TAG: '{{.IMAGE_TAG | default .Env.IMAGE_TAG | default "latest"}}'
 
 tasks:
@@ -180,11 +181,12 @@ tasks:
     summary: Build the container image using Docker.
     desc: |
       Builds the Docker image using the Dockerfile in the current directory.
-      Uses REGISTRY_PATH, IMAGE_NAME, IMAGE_TAG from .env file.
-      Example: task build
-               task build TAG=v1.0.1 # Override tag
+      Uses REGISTRY_PATH, IMAGE_NAME, IMAGE_TAG from .env file (or defaults).
+      Example: task build            # Builds with tag from .env or 'latest'
+               task build TAG=v1.0.1 # Overrides tag to v1.0.1
     vars:
-      TAG: '{{.IMAGE_TAG | default "latest"}}' # Allow overriding the tag via CLI
+      # TAG defaults to the IMAGE_TAG var (from .env or 'latest'), but can be overridden via CLI
+      TAG: '{{.TAG | default .IMAGE_TAG }}'
     preconditions:
       - sh: '[ -n "$REGISTRY_PATH" ]' # Check if REGISTRY_PATH env var is non-empty
         msg: "Error: REGISTRY_PATH is not set in .env file or environment."
@@ -194,10 +196,11 @@ tasks:
         msg: "'docker' command not found."
       - sh: "[ -f Dockerfile ]"
         msg: "Dockerfile not found in the current directory."
+      # Removed Git preconditions
     cmds:
       - |
         set -e
-        # Construct image name using environment variables and the task variable for the tag
+        # Construct image name using environment variables and the resolved TAG variable
         IMG="${REGISTRY_PATH}/${IMAGE_NAME}:{{.TAG}}"
         echo "Building image: $IMG ..."
         docker build -t "$IMG" .
@@ -208,17 +211,19 @@ tasks:
     summary: Apply an additional tag to the locally built image.
     desc: |
       Tags the image identified by REGISTRY_PATH/IMAGE_NAME:SOURCE_TAG with a NEW_TAG.
-      Example: task tag NEW_TAG=v1.0.0                # Tags image with tag 'latest' (from .env) as v1.0.0
-               task tag SOURCE_TAG=v1.0.0 NEW_TAG=stable # Tags image v1.0.0 as stable
+      Example: task tag NEW_TAG=v1.0.0                # Tags image with default tag (from .env or 'latest') as v1.0.0
+               task tag SOURCE_TAG=v1.1 NEW_TAG=stable # Tags image v1.1 as stable
     vars:
-      SOURCE_TAG: '{{.IMAGE_TAG | default "latest"}}' # Default source tag from .env or 'latest'
-      NEW_TAG: "" # Must be provided via CLI
+      # Uses IMAGE_TAG (from .env or 'latest') as the default SOURCE_TAG
+      SOURCE_TAG: '{{.SOURCE_TAG | default .IMAGE_TAG }}'
+      # NEW_TAG: ""  # <<< REMOVE THIS LINE
     preconditions:
       - sh: '[ -n "$REGISTRY_PATH" ]'
         msg: "Error: REGISTRY_PATH is not set in .env file or environment."
       - sh: '[ -n "$IMAGE_NAME" ]'
         msg: "Error: IMAGE_NAME is not set in .env file or environment."
-      - sh: '[ -n "{{.NEW_TAG}}" ]' # Check Task variable directly
+      # This precondition now correctly checks if NEW_TAG was provided via CLI
+      - sh: '[ -n "{{.NEW_TAG}}" ]'
         msg: "Error: NEW_TAG variable must be provided. Usage 'task tag NEW_TAG=<new-tag> [SOURCE_TAG=<source>]'"
       - sh: "command -v docker"
         msg: "'docker' command not found."
@@ -235,12 +240,14 @@ tasks:
   push:
     summary: Push the container image to the registry.
     desc: |
-      Pushes the specified tag to the registry (defaults to IMAGE_TAG from .env or 'latest').
-      Assumes docker is already authenticated with the registry (e.g., via 'gcloud auth configure-docker').
-      Example: task push            # Pushes the tag specified in .env (e.g., latest)
-               task push PUSH_TAG=v1.0.0 # Pushes the v1.0.0 tag
+      Pushes the specified tag to the registry.
+      Default Tag: From .env variable IMAGE_TAG or 'latest'.
+      Assumes docker is already authenticated.
+      Example: task push                # Pushes tag from .env or 'latest'
+               task push PUSH_TAG=manual # Pushes the 'manual' tag
     vars:
-      PUSH_TAG: '{{.IMAGE_TAG | default "latest"}}' # Allow overriding the push tag via CLI
+      # PUSH_TAG defaults to the IMAGE_TAG var (from .env or 'latest'), but can be overridden via CLI
+      PUSH_TAG: '{{.PUSH_TAG | default .IMAGE_TAG }}'
     preconditions:
       - sh: '[ -n "$REGISTRY_PATH" ]'
         msg: "Error: REGISTRY_PATH is not set in .env file or environment."
@@ -248,6 +255,7 @@ tasks:
         msg: "Error: IMAGE_NAME is not set in .env file or environment."
       - sh: "command -v docker"
         msg: "'docker' command not found."
+      # Removed Git preconditions
     cmds:
       - |
         set -e
@@ -262,14 +270,20 @@ tasks:
 
   build-push:
     summary: Build and Push the container image with a specific tag.
-    desc: Builds the image and then pushes it using the specified tag (defaults to IMAGE_TAG from .env or 'latest').
+    desc: |
+      Builds the image and then pushes it.
+      Default Tag: From .env variable IMAGE_TAG or 'latest'.
+      Example: task build-push            # Builds & pushes tag from .env or 'latest'
+               task build-push TAG=manual # Builds & pushes 'manual' tag
     vars:
-      TAG: '{{.IMAGE_TAG | default "latest"}}' # Allow overriding the tag for both build and push
-    # No specific preconditions needed here as they are checked by the called tasks
+      # TAG defaults to the IMAGE_TAG var (from .env or 'latest'), but can be overridden via CLI
+      TAG: '{{.TAG | default .IMAGE_TAG }}'
+    # Removed Git preconditions
+    # No specific container/docker preconditions needed here as they are checked by the called tasks
     cmds:
-      # Call the build task, passing the TAG variable
+      # Call the build task, passing the resolved TAG variable
       - task: build
         vars: { TAG: "{{.TAG}}" }
-      # Call the push task, passing the same TAG variable as PUSH_TAG
+      # Call the push task, passing the same resolved TAG variable as PUSH_TAG
       - task: push
         vars: { PUSH_TAG: "{{.TAG}}" }
