@@ -1,75 +1,181 @@
 # ./Taskfile.yaml
+# Taskfile for Python Project Container Management and Utilities
+
 version: '3'
 dotenv: [".env"] # Loads variables from .env file
 
 vars:
-  # Define the output file name for the AI context
+  # --- AI Task Variables ---
   AI_OUTPUT_FILE: ai_context.txt
-  # Read variables from .env into Taskfile vars for easier use (optional but cleaner)
-  # Note: These are snapshots at load time. Shell commands use live env vars.
+  # Adjusted regex to exclude Terraform-specific files if desired,
+  # but kept broad for potential future use or other file types.
+  INCLUDE_EXTENSIONS_REGEX: '\.(py|yaml|json|md|gitignore|txt|nix|Dockerfile)$|^(Taskfile\.yaml|requirements\.txt)$'
+  MAX_FILE_SIZE_KB: 500
+  EXCLUDE_PATHS_REGEX: '(^\.git/|^\.venv/|^__pycache__/|^\.DS_Store|^\.vscode/|ai_context\.txt)' # Removed TF specific exclusions
+
+  # --- Container Variables (reading from .env) ---
   REGISTRY_PATH: '{{.REGISTRY_PATH | default .Env.REGISTRY_PATH}}'
   IMAGE_NAME: '{{.IMAGE_NAME | default .Env.IMAGE_NAME}}'
   IMAGE_TAG: '{{.IMAGE_TAG | default .Env.IMAGE_TAG | default "latest"}}'
-  # Construct full image name for convenience in some tasks if needed
-  FULL_IMAGE_NAME: "{{.REGISTRY_PATH}}/{{.IMAGE_NAME}}" # Tag is separate
 
 tasks:
-  # --- Existing AI Task ---
+  # --- Python Linting and Formatting ---
+  format:py:
+    summary: "Formats Python code using black."
+    cmds:
+      - echo "Running black..."
+      # Change 'scripts/' to '.' to format files in the current directory
+      - black .
+    preconditions:
+      # Remove the check for the 'scripts/' directory
+      # - sh: "[ -d scripts ]"
+      #   msg: "'scripts' directory not found."
+      - sh: "command -v black"
+        msg: "'black' command not found. Is it installed via Nix?"
+    silent: false
+
+  lint:py:
+    summary: "Lints Python code using flake8."
+    cmds:
+      - echo "Running flake8..."
+      # Change 'scripts/' to '.' to lint files in the current directory
+      - flake8 .
+    preconditions:
+      # Remove the check for the 'scripts/' directory
+      # - sh: "[ -d scripts ]"
+      #   msg: "'scripts' directory not found."
+      - sh: "command -v flake8"
+        msg: "'flake8' command not found. Is it installed via Nix?"
+    silent: false
+
+  # --- AI Context Generation ---
   ai:
-    # ... (ai task content remains the same) ...
-    summary: "Generate a context file for AI interaction."
+    summary: "Generates a context file for AI interaction."
+    # Note: Removed terraform fmt dependency
+    preconditions:
+      - sh: '[ "$(pwd)" = "{{.TASKFILE_DIR}}" ]'
+        msg: "AI task must be run from the project root directory ({{.TASKFILE_DIR}})."
+      - sh: "[ -d .git ]"
+        msg: "AI task should be run from the root of a Git repository."
+      - sh: "command -v git"
+        msg: "'git' command not found."
+      - sh: "command -v grep"
+        msg: "'grep' command not found."
+      # Removed terraform command check
     desc: |
-      Generates a file (default: ai_context.txt specified in vars) containing:
-      1. An interactively entered prompt.
-      2. The content of specific project files (.py, .html, .md, .gitignore, Taskfile.yaml).
-      Each file's content is clearly delimited for unambiguous parsing by an AI.
+      Generates a file ({{.AI_OUTPUT_FILE}}) containing structured context for an AI,
+      tailored for this Python/GCP project using shell commands.
+      NOTE: Inclusion/Exclusion rules are defined in Taskfile vars. Must be run from project root.
+      Includes:
+      1. User prompt (interactive).
+      3. Key Tool Versions & Environment Details.
+      4. Git status summary.
+      5. Project directory structure (Level 2).
+      6. Content of relevant files (formatted) based on regex: {{.INCLUDE_EXTENSIONS_REGEX}}
+         Excluding paths based on regex: {{.EXCLUDE_PATHS_REGEX}}
+         Respects .gitignore. Max file size: {{.MAX_FILE_SIZE_KB}}KB.
     cmds:
       - |
         set -e # Exit immediately if a command exits with a non-zero status.
 
+        # --- Configuration ---
         OUTPUT_FILE="{{.AI_OUTPUT_FILE}}"
+        MAX_SIZE_BYTES=$(( {{.MAX_FILE_SIZE_KB}} * 1024 ))
+        INCLUDE_REGEX='{{.INCLUDE_EXTENSIONS_REGEX}}'
+        EXCLUDE_REGEX='{{.EXCLUDE_PATHS_REGEX}}'
 
-        # --- Clear/Create Output File ---
-        > "$OUTPUT_FILE"
+        # --- Initialization ---
         echo "Generating AI context in $OUTPUT_FILE..."
+        > "$OUTPUT_FILE" # Overwrite/create the file
 
-        # --- Prompt Input (Interactive) ---
+        # --- Section: User Prompt ---
+        printf "### Prompt\n\n" >> "$OUTPUT_FILE"
+        echo "---------------------------------------------------------------------" >&2
+        echo "Enter a prompt for the AI (e.g., 'Refactor X module', 'Add Y feature to script', 'Review changes in compute.tf')." >&2
+        echo "Be specific about goals, files, resources, or errors." >&2
+        echo "---------------------------------------------------------------------" >&2
         USER_PROMPT=""
         while [ -z "$USER_PROMPT" ]; do
-          read -r -p "Enter a prompt for the AI: " USER_PROMPT
+          read -r -p "> " USER_PROMPT
           if [ -z "$USER_PROMPT" ]; then
             echo "Prompt cannot be empty. Please try again." >&2
           fi
         done
+        printf "%s\n\n" "$USER_PROMPT" >> "$OUTPUT_FILE"
 
-        # --- Write Prompt to Output File ---
-        printf "### Prompt\n\n" >> "$OUTPUT_FILE"
-        printf "%s\n\n" "$USER_PROMPT" >> "$OUTPUT_FILE" # Add extra newline for separation
+        # --- Section: Environment Context ---
+        printf "### Environment Context\n\n" >> "$OUTPUT_FILE"
+        printf "OS Type: " >> "$OUTPUT_FILE"
+        { uname -s || echo "Unknown"; } >> "$OUTPUT_FILE"
+        printf "Key tool versions:\n" >> "$OUTPUT_FILE"
+        # Removed Terraform version check
+        { printf "  Python: "; python --version || python3 --version || echo "Not found"; } >> "$OUTPUT_FILE"
+        { printf "  gcloud: "; gcloud version | grep "Google Cloud SDK" || echo "Not found"; } >> "$OUTPUT_FILE"
+        printf "Other potentially relevant tools:\n" >> "$OUTPUT_FILE"
+        { printf "  jq: "; command -v jq >/dev/null && echo "Available" || echo "Not found"; } >> "$OUTPUT_FILE"
+        { printf "  flake8: "; command -v flake8 >/dev/null && echo "Available" || echo "Not found"; } >> "$OUTPUT_FILE"
+        { printf "  black: "; command -v black >/dev/null && echo "Available" || echo "Not found"; } >> "$OUTPUT_FILE" # Added black check
+        printf "Relevant environment variables:\n" >> "$OUTPUT_FILE"
+        printf "  GOOGLE_CLOUD_PROJECT: %s\n" "${GOOGLE_CLOUD_PROJECT:-<unset>}" >> "$OUTPUT_FILE"
+        printf "  GOOGLE_REGION: %s\n" "${GOOGLE_REGION:-<unset>}" >> "$OUTPUT_FILE"
+        if [ -f ".idx/dev.nix" ]; then printf "Nix environment definition found in included .idx/dev.nix file.\n"; fi >> "$OUTPUT_FILE"
+        printf "\n\n" >> "$OUTPUT_FILE"
 
-        # --- Write Code Content Header ---
-        printf "### Code Content\n\n" >> "$OUTPUT_FILE"
+        # --- Section: Git Status ---
+        printf "### Git Status (Summary)\n\n" >> "$OUTPUT_FILE"
+        printf "Provides context on recent local changes (after potential formatting):\n\n" >> "$OUTPUT_FILE"
+        { git status --short || echo "Failed to get git status (maybe not a git repo?)."; } >> "$OUTPUT_FILE"
+        printf "\n\n" >> "$OUTPUT_FILE"
 
-        # --- Find and Append Relevant Files ---
-        # Updated find command based on previous context
-        find . -type f \( -name "*.py" -o -name "*.html" -o -name "*.md" -o -name ".gitignore" -o -name "Taskfile.yaml" -o -name "Dockerfile" -o -name "requirements.txt" \) \
-          -not -path "./.venv/*" -not -path "./env/*" -not -path "./venv/*" \
-          -exec sh -c '
-            FILE="$1"
-            OUTPUT_FILE_INNER="'"$OUTPUT_FILE"'"
-            {
-              printf "\n======== FILE: %s ========\n\n" "$FILE" && \
-              cat "$FILE" && \
-              printf "\n======== END FILE: %s ========\n\n" "$FILE"
-            } >> "$OUTPUT_FILE_INNER" || {
-              echo "Error processing file: $FILE" >&2
-              exit 1
-            }
-          ' sh {} \;
+        # --- Section: Project Structure ---
+        printf "### Project Structure (Top Levels)\n\n" >> "$OUTPUT_FILE"
+        printf "Directory layout (up to 2 levels deep):\n\n" >> "$OUTPUT_FILE"
+        { tree -L 2 -a -I '.git|.venv|__pycache__|.DS_Store|.idx|.vscode|ai_context.txt' || ls -Ap | grep '/$' || echo "'tree' command not found, using 'ls'."; } >> "$OUTPUT_FILE" # Removed TF exclusions
+        printf "\n\n" >> "$OUTPUT_FILE"
+
+        # --- Section: Relevant File Contents ---
+        printf "### Relevant Code Files Follow\n\n" >> "$OUTPUT_FILE"
+
+        # --- Helper Function ---
+        append_file_content() {
+          local FILE="$1"
+          local OUTPUT_FILE_INNER="$2"
+          local MAX_BYTES="$3"
+          local FILE_SIZE_BYTES
+          if [ ! -f "$FILE" ] || [ ! -r "$FILE" ] || [ -L "$FILE" ]; then return; fi
+          FILE_SIZE_BYTES=$(stat -c %s "$FILE" 2>/dev/null || stat -f %z "$FILE" 2>/dev/null || echo 0)
+          if [ "$FILE_SIZE_BYTES" -eq 0 ]; then echo "Skipping (empty file): $FILE" >&2; return; fi
+          if [ "$FILE_SIZE_BYTES" -gt "$MAX_BYTES" ]; then echo "Skipping (too large: ${FILE_SIZE_BYTES}B > ${MAX_BYTES}B): $FILE" >&2; return; fi
+          {
+            printf "\n======== FILE: %s ========\n" "$FILE"
+            cat "$FILE"
+            printf "\n======== END FILE: %s ========\n\n" "$FILE"
+          } >> "$OUTPUT_FILE_INNER" || { echo "Error processing file: $FILE" >&2; return 1; }
+          echo "Included: $FILE (${FILE_SIZE_BYTES}B)" >&2
+        }
+
+        # --- File Processing ---
+        echo "Filtering and processing files tracked/untracked by Git..." >&2
+        while IFS= read -r file_path; do
+          # Ensure we skip the output file itself
+          if [ "$file_path" = "./$OUTPUT_FILE" ]; then continue; fi
+          append_file_content "$file_path" "$OUTPUT_FILE" "$MAX_SIZE_BYTES"
+        done < <(git ls-files -co --exclude-standard | grep -E "$INCLUDE_REGEX" | grep -vE "$EXCLUDE_PATHS_REGEX")
+
+        # --- Explicit Additions (Fallback/Guarantee) ---
+        echo "Checking for explicit additions..." >&2
+        for f in ./Taskfile.yaml ./requirements.txt ./requirements-dev.txt; do # Added dev requirements
+            # Ensure we skip the output file itself if listed explicitly
+            if [ "$f" = "./$OUTPUT_FILE" ]; then continue; fi
+            if [ -f "$f" ] && ! grep -qP "======== FILE: \./?$f ========" "$OUTPUT_FILE"; then
+                append_file_content "$f" "$OUTPUT_FILE" "$MAX_SIZE_BYTES"
+            fi
+        done
 
         echo "Successfully generated AI context in $OUTPUT_FILE"
-    silent: false
+    silent: false # Show command output for easier debugging
 
-  # --- Container Tasks ---
+  # --- Container Management ---
   build:
     summary: Build the container image using Docker.
     desc: |
@@ -78,17 +184,20 @@ tasks:
       Example: task build
                task build TAG=v1.0.1 # Override tag
     vars:
-      TAG: '{{.IMAGE_TAG | default "latest"}}'
-    # --- NEW: Use preconditions for checks ---
+      TAG: '{{.IMAGE_TAG | default "latest"}}' # Allow overriding the tag via CLI
     preconditions:
-      - sh: '[ -n "$REGISTRY_PATH" ]' # Check if REGISTRY_PATH is non-empty
-        msg: "Error: REGISTRY_PATH is not set in .env file."
-      - sh: '[ -n "$IMAGE_NAME" ]' # Check if IMAGE_NAME is non-empty
-        msg: "Error: IMAGE_NAME is not set in .env file."
-    # --- REMOVED old test commands from cmds ---
+      - sh: '[ -n "$REGISTRY_PATH" ]' # Check if REGISTRY_PATH env var is non-empty
+        msg: "Error: REGISTRY_PATH is not set in .env file or environment."
+      - sh: '[ -n "$IMAGE_NAME" ]' # Check if IMAGE_NAME env var is non-empty
+        msg: "Error: IMAGE_NAME is not set in .env file or environment."
+      - sh: "command -v docker"
+        msg: "'docker' command not found."
+      - sh: "[ -f Dockerfile ]"
+        msg: "Dockerfile not found in the current directory."
     cmds:
       - |
         set -e
+        # Construct image name using environment variables and the task variable for the tag
         IMG="${REGISTRY_PATH}/${IMAGE_NAME}:{{.TAG}}"
         echo "Building image: $IMG ..."
         docker build -t "$IMG" .
@@ -102,17 +211,17 @@ tasks:
       Example: task tag NEW_TAG=v1.0.0                # Tags image with tag 'latest' (from .env) as v1.0.0
                task tag SOURCE_TAG=v1.0.0 NEW_TAG=stable # Tags image v1.0.0 as stable
     vars:
-      SOURCE_TAG: '{{.IMAGE_TAG | default "latest"}}'
-      NEW_TAG: ""
-    # --- NEW: Use preconditions for checks ---
+      SOURCE_TAG: '{{.IMAGE_TAG | default "latest"}}' # Default source tag from .env or 'latest'
+      NEW_TAG: "" # Must be provided via CLI
     preconditions:
       - sh: '[ -n "$REGISTRY_PATH" ]'
-        msg: "Error: REGISTRY_PATH is not set in .env file."
+        msg: "Error: REGISTRY_PATH is not set in .env file or environment."
       - sh: '[ -n "$IMAGE_NAME" ]'
-        msg: "Error: IMAGE_NAME is not set in .env file."
+        msg: "Error: IMAGE_NAME is not set in .env file or environment."
       - sh: '[ -n "{{.NEW_TAG}}" ]' # Check Task variable directly
         msg: "Error: NEW_TAG variable must be provided. Usage 'task tag NEW_TAG=<new-tag> [SOURCE_TAG=<source>]'"
-    # --- REMOVED old test commands from cmds ---
+      - sh: "command -v docker"
+        msg: "'docker' command not found."
     cmds:
       - |
         set -e
@@ -126,39 +235,41 @@ tasks:
   push:
     summary: Push the container image to the registry.
     desc: |
-      Pushes the specified tag to the registry (defaults to IMAGE_TAG from .env).
-      Assumes docker is already authenticated with the registry (e.g., using 'gcloud auth configure-docker').
+      Pushes the specified tag to the registry (defaults to IMAGE_TAG from .env or 'latest').
+      Assumes docker is already authenticated with the registry (e.g., via 'gcloud auth configure-docker').
       Example: task push            # Pushes the tag specified in .env (e.g., latest)
                task push PUSH_TAG=v1.0.0 # Pushes the v1.0.0 tag
     vars:
-      PUSH_TAG: '{{.IMAGE_TAG | default "latest"}}'
-    # --- NEW: Use preconditions for checks ---
+      PUSH_TAG: '{{.IMAGE_TAG | default "latest"}}' # Allow overriding the push tag via CLI
     preconditions:
       - sh: '[ -n "$REGISTRY_PATH" ]'
-        msg: "Error: REGISTRY_PATH is not set in .env file."
+        msg: "Error: REGISTRY_PATH is not set in .env file or environment."
       - sh: '[ -n "$IMAGE_NAME" ]'
-        msg: "Error: IMAGE_NAME is not set in .env file."
-    # --- REMOVED old test commands from cmds ---
+        msg: "Error: IMAGE_NAME is not set in .env file or environment."
+      - sh: "command -v docker"
+        msg: "'docker' command not found."
     cmds:
       - |
         set -e
         IMG_TO_PUSH="${REGISTRY_PATH}/${IMAGE_NAME}:{{.PUSH_TAG}}"
         echo "Pushing $IMG_TO_PUSH ..."
         echo "(Ensure you have authenticated docker with '$REGISTRY_PATH')"
+        # Example for GCR/Artifact Registry:
         echo "(e.g., run 'gcloud auth configure-docker $(echo $REGISTRY_PATH | cut -d'/' -f1)' or 'docker login ...')"
         docker push "$IMG_TO_PUSH"
         echo "Push complete: $IMG_TO_PUSH"
     silent: false
 
-  # --- Convenience Task ---
   build-push:
-    summary: Build and Push the container image.
-    desc: Builds the image and then pushes it using the specified tag (defaults to IMAGE_TAG from .env).
+    summary: Build and Push the container image with a specific tag.
+    desc: Builds the image and then pushes it using the specified tag (defaults to IMAGE_TAG from .env or 'latest').
     vars:
-      TAG: '{{.IMAGE_TAG | default "latest"}}'
-    # No preconditions needed here as they are checked by the called tasks
+      TAG: '{{.IMAGE_TAG | default "latest"}}' # Allow overriding the tag for both build and push
+    # No specific preconditions needed here as they are checked by the called tasks
     cmds:
+      # Call the build task, passing the TAG variable
       - task: build
         vars: { TAG: "{{.TAG}}" }
+      # Call the push task, passing the same TAG variable as PUSH_TAG
       - task: push
         vars: { PUSH_TAG: "{{.TAG}}" }
